@@ -39,13 +39,19 @@ if docker info >/dev/null 2>&1; then
     image="$(image_name "$model")"
     if docker image inspect "$image" >/dev/null 2>&1; then
       set +e
-      output="$(docker run --rm --volume "$PWD/examples/${model}:/work" --workdir /work "$image" 2>&1)"
+      output="$(docker run --rm --volume "$PWD/examples/${model}:/work" --workdir /work "$image" 2>&1 | tr -d '\000')"
       status=$?
       set -e
       if [[ "$status" -eq 127 ]]; then
         echo "${model}: missing executable message OK"
       elif [[ "$status" -eq 0 ]]; then
         echo "${model}: executable started OK"
+      elif [[ "$model" == "dssat" && "$status" -eq 99 ]]; then
+        echo "${model}: executable displayed usage without a work case"
+      elif [[ "$model" == "oryza" && "$status" -eq 24 ]]; then
+        echo "${model}: executable requested a work-case input file"
+      elif [[ "$model" == "aquacrop" && "$status" -eq 1 && "$output" == *"Failed to create LIST/ListProjectsTemp.txt"* ]]; then
+        echo "${model}: executable requested a work-case project structure"
       else
         echo "$output" >&2
         echo "error: ${model} container returned unexpected status ${status}" >&2
@@ -60,4 +66,3 @@ else
 fi
 
 echo "All tests passed."
-

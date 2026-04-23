@@ -17,7 +17,7 @@ This keeps dependencies, executable names, licenses and debugging isolated. A DS
 The launcher command is:
 
 ```bash
-crop-run <modelo> <carpeta_inputs> [args_extra]
+crop-run <model> <input_folder> [extra_args]
 ```
 
 It performs these steps:
@@ -51,4 +51,3 @@ DOCKERHUB_USERNAME/agroclimr-app-aquacrop:0.1.0
 ```
 
 `scripts/build_all.sh` also tags `latest` when `TAG_LATEST=true`.
-

@@ -10,6 +10,9 @@ Thumbs.db
 
 # Logs and runtime output
 *.log
+*.OUT
+*.LST
+fort.*
 logs/
 tmp/
 out/
@@ -30,4 +33,3 @@ __pycache__/
 .Rhistory
 .RData
 .Rproj.user/
-

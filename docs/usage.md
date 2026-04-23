@@ -45,11 +45,11 @@ agroclim-run dssat ~/forecast/test/dssat B DSSBatch.v47
 
 ## Common errors
 
-`Docker no esta disponible`
+`Docker is unavailable`
 
 Docker Desktop is not running or WSL2 integration is disabled for Debian.
 
-`La carpeta de inputs no existe`
+`Input folder does not exist`
 
 Create the folder first or pass the correct Linux path. Prefer `~/forecast/...` over `/mnt/c/...`.
 
@@ -60,4 +60,3 @@ The image was built without the real model executable. Place the Linux executabl
 `pull access denied`
 
 The image name uses the placeholder `DOCKERHUB_USERNAME`. Set `DOCKERHUB_USERNAME` in `.env`, rebuild and rerun.
-

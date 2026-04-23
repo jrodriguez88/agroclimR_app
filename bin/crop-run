@@ -9,23 +9,23 @@ IMAGE_PREFIX="${IMAGE_PREFIX:-agroclimr-app}"
 usage() {
   cat <<'USAGE'
 Usage:
-  crop-run <modelo> <carpeta_inputs> [args_extra]
+  crop-run <model> <input_folder> [extra_args]
   crop-run --help
 
-Modelos:
+Models:
   dssat
   oryza
   aquacrop
 
-Ejemplos:
+Examples:
   crop-run oryza ~/forecast/test/oryza
   crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
   crop-run aquacrop ~/forecast/test/aquacrop
 
 Variables:
-  DOCKERHUB_USERNAME  Usuario/namespace de Docker Hub.
-  VERSION             Version de las imagenes. Default: 0.1.0
-  IMAGE_PREFIX        Prefijo de imagenes. Default: agroclimr-app
+  DOCKERHUB_USERNAME  Docker Hub user or namespace.
+  VERSION             Image version. Default: 0.1.0
+  IMAGE_PREFIX        Image prefix. Default: agroclimr-app
 USAGE
 }
 
@@ -35,7 +35,7 @@ die() {
 }
 
 require_command() {
-  command -v "$1" >/dev/null 2>&1 || die "No se encontro '$1' en PATH."
+  command -v "$1" >/dev/null 2>&1 || die "Could not find '$1' in PATH."
 }
 
 absolute_path() {
@@ -75,19 +75,19 @@ main() {
   shift 2
 
   require_command docker
-  docker info >/dev/null 2>&1 || die "Docker no esta disponible. En WSL, revisa Docker Desktop e integracion WSL2."
+  docker info >/dev/null 2>&1 || die "Docker is unavailable. On WSL, check Docker Desktop and WSL2 integration."
 
-  [[ -d "$input_dir" ]] || die "La carpeta de inputs no existe: $input_dir"
+  [[ -d "$input_dir" ]] || die "Input folder does not exist: $input_dir"
 
   local workdir
   workdir="$(absolute_path "$input_dir")"
 
   local image
-  image="$(image_for_model "$model")" || die "Modelo no soportado: $model. Usa dssat, oryza o aquacrop."
+  image="$(image_for_model "$model")" || die "Unsupported model: $model. Use dssat, oryza, or aquacrop."
 
-  echo "Modelo: $model"
-  echo "Imagen: $image"
-  echo "Trabajo: $workdir -> /work"
+  echo "Model: $model"
+  echo "Image: $image"
+  echo "Workdir: $workdir -> /work"
 
   docker run --rm \
     --volume "${workdir}:/work" \

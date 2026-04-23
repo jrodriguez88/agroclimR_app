@@ -1,12 +1,12 @@
 # agroclimR_app
 
-`agroclimR_app` es un wrapper reproducible para ejecutar modelos de simulacion de cultivos desde Debian/WSL usando Docker. El proyecto ofrece un unico comando, `crop-run`, que despacha a tres imagenes independientes:
+`agroclimR_app` is a reproducible Docker-based launcher for running crop simulation models from Debian/WSL, Linux, or any shell with Docker available. It exposes one command, `crop-run`, and routes each model to an isolated container image:
 
 - DSSAT
 - ORYZA
 - AquaCrop
 
-La interfaz buscada es estable:
+The intended user interface is stable:
 
 ```bash
 crop-run oryza ~/forecast/test/oryza
@@ -14,11 +14,17 @@ crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
 crop-run aquacrop ~/forecast/test/aquacrop
 ```
 
-Los inputs y outputs viven en la carpeta local indicada por el usuario. El contenedor la monta como `/work`, ejecuta el modelo desde alli y termina.
+Input and output files stay in the host folder selected by the user. The container mounts that folder as `/work`, runs the selected model from there, writes outputs back to the same folder, and exits.
 
-## Arquitectura
+## Why This Project Exists
 
-El proyecto usa tres imagenes separadas para evitar mezclar dependencias, licencias, binarios y supuestos de ejecucion:
+Crop model workflows often depend on a fragile mix of operating system packages, executable names, model-specific conventions, and licensing constraints. This project keeps those concerns isolated behind model-specific Docker images while giving users a single launcher command for day-to-day execution.
+
+The repository contains only the wrapper, Dockerfiles, scripts, documentation, and empty placeholders for local assets. Licensed binaries, installers, private datasets, and credentials are intentionally excluded from Git.
+
+## Architecture
+
+The project uses three independent images so each model can evolve without leaking dependencies or assumptions into the others:
 
 ```text
 DOCKERHUB_USERNAME/agroclimr-app-dssat:0.1.0
@@ -26,113 +32,112 @@ DOCKERHUB_USERNAME/agroclimr-app-oryza:0.1.0
 DOCKERHUB_USERNAME/agroclimr-app-aquacrop:0.1.0
 ```
 
-El launcher `bin/crop-run` selecciona la imagen correcta, valida argumentos, resuelve rutas absolutas, monta la carpeta como `/work` y pasa argumentos extra sin romper quoting.
+The launcher at `bin/crop-run` validates arguments, resolves the host input folder, selects the matching image, mounts the folder as `/work`, and forwards any extra arguments unchanged to the container entrypoint.
 
-## Requisitos previos
+## Requirements
 
-- Debian sobre WSL2.
-- Docker Desktop con integracion WSL2 habilitada para la distro Debian.
-- `bash`, `git` y `docker` disponibles en la distro.
-- Opcional: GitHub CLI (`gh`) para crear y publicar el repositorio.
+- Debian on WSL2 or a Linux environment with Docker.
+- Docker Desktop with WSL2 integration enabled when using Windows.
+- `bash`, `git`, and `docker`.
+- Optional: GitHub CLI (`gh`) for repository bootstrapping.
 
-Trabaja preferiblemente dentro del filesystem Linux de WSL, por ejemplo:
+For WSL2, work from the Linux filesystem when possible:
 
 ```bash
 cd ~
-git clone https://github.com/GITHUB_USERNAME/agroclimR_app.git
+git clone https://github.com/jrodriguez88/agroclimR_app.git
 cd agroclimR_app
 ```
 
-Evita ejecutar cargas pesadas desde `/mnt/c/...` porque los bind mounts suelen ser mas lentos.
+Avoid heavy model runs from `/mnt/c/...` because bind mounts are usually slower there.
 
-## Configuracion
+## Configuration
 
-Copia el archivo de ejemplo:
+Copy the sample environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Edita al menos:
+Review and adjust at least:
 
 ```bash
-GITHUB_USERNAME=tu_usuario_github
-DOCKERHUB_USERNAME=tu_usuario_dockerhub
+GITHUB_USERNAME=your_github_username
+DOCKERHUB_USERNAME=your_dockerhub_namespace
 PROJECT_NAME=agroclimR_app
 VERSION=0.1.0
 ```
 
-Opcionalmente fija las fuentes usadas en los builds:
+Optional build source settings:
 
 ```bash
 DSSAT_REF=v4.8.5.0
 AQUACROP_REF=v7.3_typofix
 ```
 
-Luego prepara permisos y dependencias basicas:
+Prepare local permissions and check basic dependencies:
 
 ```bash
 ./scripts/setup_local.sh
 ```
 
-Para tener `crop-run` disponible en la shell:
+Expose the launcher in your current shell:
 
 ```bash
 export PATH="$PWD/bin:$PATH"
 ```
 
-Alias opcional:
+Optional alias:
 
 ```bash
 alias agroclim-run='crop-run'
 ```
 
-## Artefactos y fuentes de modelos
+## Model Artifacts
 
-DSSAT se construye desde `https://github.com/DSSAT/dssat-csm-os.git` usando CMake y GNU Fortran, de forma similar al Dockerfile de referencia de Steven Sotelo, pero aislado en su propia imagen.
+DSSAT is built from `https://github.com/DSSAT/dssat-csm-os.git` using CMake and GNU Fortran.
 
-AquaCrop se construye desde `https://github.com/KUL-RSDA/AquaCrop.git` usando `make` en `src`, siguiendo la documentacion oficial del proyecto open-source.
+AquaCrop is built from `https://github.com/KUL-RSDA/AquaCrop.git` with `make` in `src`.
 
-Este repositorio no incluye binarios propietarios, instaladores oficiales ni datasets pesados. Si ya descargaste instaladores Linux para ORYZA o AquaCrop, copialos primero a `inst/` como area de trabajo local y luego coloca el ejecutable final en la carpeta `vendor/bin` del modelo correspondiente.
+ORYZA is not downloaded by this repository. Provide a Linux executable locally when your license and distribution terms allow it.
 
-Rutas esperadas por defecto:
+Local artifact paths:
 
 ```text
 docker/oryza/vendor/bin/oryza
 docker/aquacrop/vendor/bin/aquacrop
+docker/dssat/vendor/bin/dscsm048
 ```
 
-`docker/aquacrop/vendor/bin/aquacrop` es opcional: si existe, sobrescribe el binario compilado desde fuente. Para DSSAT, `docker/dssat/vendor/bin/dscsm048` tambien puede sobrescribir el binario compilado.
+The AquaCrop and DSSAT vendor binaries are optional overrides. If present, they replace the executable built from source. ORYZA requires a supplied executable unless you customize the image.
 
-Tambien puedes cambiar el nombre esperado con build args:
+You can change the expected executable names with build arguments:
 
 ```bash
-docker build --build-arg ORYZA_EXECUTABLE=mi_oryza -f docker/oryza/Dockerfile .
-docker build --build-arg AQUACROP_EXECUTABLE=mi_aquacrop -f docker/aquacrop/Dockerfile .
-docker build --build-arg DSSAT_EXECUTABLE=mi_dssat -f docker/dssat/Dockerfile .
+docker build --build-arg ORYZA_EXECUTABLE=my_oryza -f docker/oryza/Dockerfile .
+docker build --build-arg AQUACROP_EXECUTABLE=my_aquacrop -f docker/aquacrop/Dockerfile .
+docker build --build-arg DSSAT_EXECUTABLE=my_dssat -f docker/dssat/Dockerfile .
 ```
 
-Si falta el binario ORYZA, la imagen se construye igual y el contenedor falla con un mensaje controlado. Esto permite validar estructura, CI local y flujo Docker sin inventar descargas.
+If the ORYZA executable is missing, the image can still build and will fail at runtime with a clear message. This keeps Docker, CI, and repository checks usable without redistributing restricted assets.
 
-## Construir imagenes
+## Build Images
 
 ```bash
 ./scripts/build_all.sh
 ```
 
-El script carga `.env` si existe, construye las tres imagenes y etiqueta cada una con `VERSION` y `latest`.
+The script loads `.env` when present, builds the three images, and tags each one with `VERSION` and, when `TAG_LATEST=true`, `latest`.
 
-## Pruebas
+## Run Checks
 
 ```bash
 ./scripts/test_all.sh
 ```
 
-Las pruebas validan sintaxis bash, `crop-run --help`, estructura esperada y arranque controlado de los contenedores. Si faltan binarios reales, el test acepta los mensajes de artefacto faltante.
+The test script validates Bash syntax, launcher help output, expected repository structure, and controlled container startup behavior. If real model binaries are missing, the runtime check accepts the expected missing-artifact messages.
 
-## Uso
-
-Con las imagenes construidas:
+## Usage
 
 ```bash
 crop-run oryza ~/forecast/test/oryza
@@ -140,58 +145,63 @@ crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
 crop-run aquacrop ~/forecast/test/aquacrop
 ```
 
-Tambien puedes usar variables para apuntar a otro registry o version:
+You can override the namespace or image version for a single command:
 
 ```bash
-DOCKERHUB_USERNAME=miusuario VERSION=0.1.0 crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
+DOCKERHUB_USERNAME=myuser VERSION=0.1.0 crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
 ```
 
-## Publicar en GitHub
+## Publish To GitHub
 
-Si `gh` esta instalado y autenticado:
+Before pushing, confirm that no private files are staged:
 
 ```bash
-./scripts/init_repo.sh
+git status --short
+git diff --cached --name-only
 ```
 
-El script inicializa Git si hace falta, crea commits iniciales si no existen y puede crear el remoto `GITHUB_USERNAME/agroclimR_app`.
+Files such as `.env`, installers, model binaries, private datasets, and local runtime output must stay out of Git. The repository `.gitignore` excludes those paths by default.
 
-Si prefieres hacerlo manualmente:
+Push the repository:
 
 ```bash
-git remote add origin https://github.com/GITHUB_USERNAME/agroclimR_app.git
 git push -u origin main
 ```
 
-No guardes tokens ni credenciales dentro del repositorio.
+## Publish To Docker Hub
 
-## Publicar en Docker Hub
-
-Inicia sesion primero:
+Authenticate first:
 
 ```bash
 docker login
 ```
 
-Luego publica:
+Build and publish all images:
 
 ```bash
+./scripts/build_all.sh
 ./scripts/publish_all.sh
 ```
 
-El script publica las tres imagenes con `VERSION` y `latest`.
+The publish script pushes all three model images with `VERSION` and, when enabled, `latest`.
 
-## Limitaciones actuales
+## Security And Distribution Notes
 
-- DSSAT, ORYZA y AquaCrop pueden requerir binarios, fuentes o instaladores con condiciones de distribucion propias.
-- Este repositorio licencia solo el wrapper, scripts y scaffold propio bajo MIT.
-- Los entrypoints asumen nombres de ejecutable por defecto; ajustalos si tu paquete oficial usa otro nombre.
-- ORYZA y AquaCrop deben validarse con los paquetes Linux exactos que descargaste.
+- Do not commit `.env`, tokens, credentials, private model inputs, licensed installers, or restricted binaries.
+- Docker images may include local vendor executables if they are present during the build. Only publish images that you are legally allowed to redistribute.
+- This repository licenses only the wrapper, scripts, documentation, and scaffold code under MIT.
+- Model packages may have their own licenses, citation requirements, and redistribution limits.
 
-## Proximos pasos
+## Current Limitations
 
-- Copiar los binarios Linux reales a las carpetas `vendor/bin`.
-- Ejecutar `./scripts/build_all.sh`.
-- Validar un caso minimo por modelo.
-- Publicar imagenes en Docker Hub.
-- Crear un pequeno set de regression tests con inputs livianos y permitidos por licencia.
+- DSSAT, ORYZA, and AquaCrop may require artifacts with separate distribution terms.
+- ORYZA must be validated with the exact Linux package available to the user.
+- Entrypoints assume default executable names unless overridden at build time.
+- Regression tests currently validate structure and startup behavior, not scientific output.
+
+## Roadmap
+
+- Validate one lightweight, license-safe sample case per model.
+- Add regression tests using permitted input datasets.
+- Add CI checks for shell syntax and documentation links.
+- Publish versioned Docker images after license review.
