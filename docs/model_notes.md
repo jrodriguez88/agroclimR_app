@@ -2,10 +2,9 @@
 
 ## DSSAT
 
-DSSAT has Linux-oriented build workflows in official materials, commonly involving Fortran tooling. This scaffold does not download sources automatically. Use one of these approaches:
+DSSAT has Linux-oriented build workflows in official materials using CMake and Fortran tooling. This image now clones the official `DSSAT/dssat-csm-os` repository, builds out-of-source with CMake, and copies `dscsm048` into `/opt/dssat/bin`.
 
-- place a compiled Linux executable at `docker/dssat/vendor/bin/dscsm048`;
-- place source or installers in `docker/dssat/vendor/source` or `docker/dssat/vendor/installers` and extend the Dockerfile with the exact official build steps you choose.
+The local `docker/dssat/vendor/bin/dscsm048` path remains available as an override if you need to test a patched executable.
 
 Default runtime:
 
@@ -27,17 +26,16 @@ If your release uses a different name, change `ORYZA_EXECUTABLE` at build time o
 
 ## AquaCrop
 
-AquaCrop stand-alone Linux releases are suited to non-GUI batch execution, but the exact archive layout and executable name can vary by package.
+AquaCrop v7.0+ is available as open-source Fortran from `KUL-RSDA/AquaCrop`. The image builds it with `make -C src` and copies the resulting `aquacrop` executable.
 
-Default expected executable:
+Default executable:
 
 ```text
 docker/aquacrop/vendor/bin/aquacrop
 ```
 
-If your package uses another name, change `AQUACROP_EXECUTABLE` at build time or rename the executable before building.
+If you provide `docker/aquacrop/vendor/bin/aquacrop`, it overrides the source-built executable. This is useful when validating the official standalone binary package you downloaded.
 
 ## Manual assets
 
 The repository ignores model binaries and installers by default. Keep private or licensed artifacts out of Git and Docker Hub unless their license explicitly permits redistribution.
-

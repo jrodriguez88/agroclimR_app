@@ -62,6 +62,13 @@ PROJECT_NAME=agroclimR_app
 VERSION=0.1.0
 ```
 
+Opcionalmente fija las fuentes usadas en los builds:
+
+```bash
+DSSAT_REF=v4.8.5.0
+AQUACROP_REF=v7.3_typofix
+```
+
 Luego prepara permisos y dependencias basicas:
 
 ```bash
@@ -80,17 +87,22 @@ Alias opcional:
 alias agroclim-run='crop-run'
 ```
 
-## Artefactos de modelos
+## Artefactos y fuentes de modelos
+
+DSSAT se construye desde `https://github.com/DSSAT/dssat-csm-os.git` usando CMake y GNU Fortran, de forma similar al Dockerfile de referencia de Steven Sotelo, pero aislado en su propia imagen.
+
+AquaCrop se construye desde `https://github.com/KUL-RSDA/AquaCrop.git` usando `make` en `src`, siguiendo la documentacion oficial del proyecto open-source.
 
 Este repositorio no incluye binarios propietarios, instaladores oficiales ni datasets pesados. Si ya descargaste instaladores Linux para ORYZA o AquaCrop, copialos primero a `inst/` como area de trabajo local y luego coloca el ejecutable final en la carpeta `vendor/bin` del modelo correspondiente.
 
 Rutas esperadas por defecto:
 
 ```text
-docker/dssat/vendor/bin/dscsm048
 docker/oryza/vendor/bin/oryza
 docker/aquacrop/vendor/bin/aquacrop
 ```
+
+`docker/aquacrop/vendor/bin/aquacrop` es opcional: si existe, sobrescribe el binario compilado desde fuente. Para DSSAT, `docker/dssat/vendor/bin/dscsm048` tambien puede sobrescribir el binario compilado.
 
 Tambien puedes cambiar el nombre esperado con build args:
 
@@ -100,7 +112,7 @@ docker build --build-arg AQUACROP_EXECUTABLE=mi_aquacrop -f docker/aquacrop/Dock
 docker build --build-arg DSSAT_EXECUTABLE=mi_dssat -f docker/dssat/Dockerfile .
 ```
 
-Si falta un binario, la imagen se construye igual y el contenedor falla con un mensaje controlado. Esto permite validar estructura, CI local y flujo Docker sin inventar descargas.
+Si falta el binario ORYZA, la imagen se construye igual y el contenedor falla con un mensaje controlado. Esto permite validar estructura, CI local y flujo Docker sin inventar descargas.
 
 ## Construir imagenes
 
@@ -183,4 +195,3 @@ El script publica las tres imagenes con `VERSION` y `latest`.
 - Validar un caso minimo por modelo.
 - Publicar imagenes en Docker Hub.
 - Crear un pequeno set de regression tests con inputs livianos y permitidos por licencia.
-

@@ -1,6 +1,6 @@
 # AquaCrop container
 
-This image expects a Linux AquaCrop stand-alone executable supplied by the user. The repository does not download or redistribute AquaCrop.
+This image builds AquaCrop from the official KUL-RSDA open-source Fortran repository by default. AquaCrop v7.0 and newer are published as open-source Fortran code endorsed by FAO, and the upstream build is `cd src && make`.
 
 Default executable expected inside the image:
 
@@ -8,17 +8,24 @@ Default executable expected inside the image:
 /opt/aquacrop/bin/aquacrop
 ```
 
-Local source path before build:
-
-```text
-docker/aquacrop/vendor/bin/aquacrop
-```
-
-If your FAO package uses another filename:
+Default build args:
 
 ```bash
-docker build --build-arg AQUACROP_EXECUTABLE=my_aquacrop_binary -f docker/aquacrop/Dockerfile .
+AQUACROP_REPO=https://github.com/KUL-RSDA/AquaCrop.git
+AQUACROP_REF=v7.3_typofix
+AQUACROP_EXECUTABLE=aquacrop
 ```
+
+Build with another tag or branch:
+
+```bash
+docker build \
+  --build-arg AQUACROP_REF=v7.2 \
+  -f docker/aquacrop/Dockerfile \
+  .
+```
+
+If you prefer the official standalone binary you downloaded, place it at `docker/aquacrop/vendor/bin/aquacrop`. That file is copied after the source-built binary and therefore overrides it.
 
 Runtime contract:
 
@@ -27,4 +34,3 @@ crop-run aquacrop /path/to/work
 ```
 
 The host folder is mounted as `/work`; AquaCrop runs from `/work`; outputs persist in the mounted folder.
-
