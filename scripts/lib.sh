@@ -19,7 +19,7 @@ require_command() {
 
 image_name() {
   local model="$1"
-  local dockerhub_username="${DOCKERHUB_USERNAME:-DOCKERHUB_USERNAME}"
+  local dockerhub_username="${DOCKERHUB_USERNAME:-dockerhub_username}"
   local image_prefix="${IMAGE_PREFIX:-agroclimr-app}"
   local version="${VERSION:-0.1.0}"
   printf '%s/%s-%s:%s\n' "$dockerhub_username" "$image_prefix" "$model" "$version"
@@ -27,8 +27,7 @@ image_name() {
 
 latest_image_name() {
   local model="$1"
-  local dockerhub_username="${DOCKERHUB_USERNAME:-DOCKERHUB_USERNAME}"
+  local dockerhub_username="${DOCKERHUB_USERNAME:-dockerhub_username}"
   local image_prefix="${IMAGE_PREFIX:-agroclimr-app}"
   printf '%s/%s-%s:latest\n' "$dockerhub_username" "$image_prefix" "$model"
 }
-

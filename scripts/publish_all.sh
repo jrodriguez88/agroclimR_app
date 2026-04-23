@@ -13,7 +13,7 @@ docker info >/dev/null 2>&1 || {
   exit 1
 }
 
-if [[ "${DOCKERHUB_USERNAME:-DOCKERHUB_USERNAME}" == "DOCKERHUB_USERNAME" ]]; then
+if [[ "${DOCKERHUB_USERNAME:-dockerhub_username}" == "dockerhub_username" ]]; then
   echo "error: set DOCKERHUB_USERNAME in .env before publishing." >&2
   exit 1
 fi
@@ -39,4 +39,3 @@ for model in "${models[@]}"; do
     echo "  $(latest_image_name "$model")"
   fi
 done
-

@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_NAME="${PROJECT_NAME:-agroclimR_app}"
 VERSION="${VERSION:-0.1.0}"
-DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME:-DOCKERHUB_USERNAME}"
+DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME:-dockerhub_username}"
 IMAGE_PREFIX="${IMAGE_PREFIX:-agroclimr-app}"
 
 usage() {
@@ -96,4 +96,3 @@ main() {
 }
 
 main "$@"
-
