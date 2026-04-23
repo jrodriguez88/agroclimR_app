@@ -1,0 +1,33 @@
+# Local environment
+.env
+*.local
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and runtime output
+*.log
+logs/
+tmp/
+out/
+
+# Model binaries, installers, datasets, and private assets
+inst/*
+!inst/.gitkeep
+docker/**/vendor/bin/*
+!docker/**/vendor/bin/.gitkeep
+docker/**/vendor/source/*
+!docker/**/vendor/source/.gitkeep
+docker/**/vendor/installers/*
+!docker/**/vendor/installers/.gitkeep
+
+# Python/R/cache artifacts that may appear during analysis
+__pycache__/
+.pytest_cache/
+.Rhistory
+.RData
+.Rproj.user/
+
