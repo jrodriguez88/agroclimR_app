@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_NAME="${PROJECT_NAME:-agroclimR_app}"
+VERSION="${VERSION:-0.1.0}"
+DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME:-DOCKERHUB_USERNAME}"
+IMAGE_PREFIX="${IMAGE_PREFIX:-agroclimr-app}"
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  crop-run <modelo> <carpeta_inputs> [args_extra]
+  crop-run --help
+
+Modelos:
+  dssat
+  oryza
+  aquacrop
+
+Ejemplos:
+  crop-run oryza ~/forecast/test/oryza
+  crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
+  crop-run aquacrop ~/forecast/test/aquacrop
+
+Variables:
+  DOCKERHUB_USERNAME  Usuario/namespace de Docker Hub.
+  VERSION             Version de las imagenes. Default: 0.1.0
+  IMAGE_PREFIX        Prefijo de imagenes. Default: agroclimr-app
+USAGE
+}
+
+die() {
+  echo "crop-run: error: $*" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || die "No se encontro '$1' en PATH."
+}
+
+absolute_path() {
+  local path="$1"
+  if command -v realpath >/dev/null 2>&1; then
+    realpath "$path"
+  else
+    (cd "$path" && pwd -P)
+  fi
+}
+
+image_for_model() {
+  local model="$1"
+  case "$model" in
+    dssat|oryza|aquacrop)
+      printf '%s/%s-%s:%s\n' "$DOCKERHUB_USERNAME" "$IMAGE_PREFIX" "$model" "$VERSION"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+main() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    usage
+    exit 0
+  fi
+
+  [[ $# -ge 2 ]] || {
+    usage >&2
+    exit 2
+  }
+
+  local model="$1"
+  local input_dir="$2"
+  shift 2
+
+  require_command docker
+  docker info >/dev/null 2>&1 || die "Docker no esta disponible. En WSL, revisa Docker Desktop e integracion WSL2."
+
+  [[ -d "$input_dir" ]] || die "La carpeta de inputs no existe: $input_dir"
+
+  local workdir
+  workdir="$(absolute_path "$input_dir")"
+
+  local image
+  image="$(image_for_model "$model")" || die "Modelo no soportado: $model. Usa dssat, oryza o aquacrop."
+
+  echo "Modelo: $model"
+  echo "Imagen: $image"
+  echo "Trabajo: $workdir -> /work"
+
+  docker run --rm \
+    --volume "${workdir}:/work" \
+    --workdir /work \
+    "$image" "$@"
+}
+
+main "$@"
+
