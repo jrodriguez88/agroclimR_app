@@ -135,7 +135,17 @@ The script loads `.env` when present, builds the three images, and tags each one
 ./scripts/test_all.sh
 ```
 
-The test script validates Bash syntax, launcher help output, expected repository structure, and controlled container startup behavior. If real model binaries are missing, the runtime check accepts the expected missing-artifact messages.
+The test script validates Bash syntax, launcher help output, expected repository structure, and controlled container startup behavior.
+
+If local example cases are available under `inst/examples/<model>`, the runtime check prefers those folders:
+
+```text
+inst/examples/dssat
+inst/examples/oryza
+inst/examples/aquacrop
+```
+
+Those folders are intended for local validation only and stay ignored by Git.
 
 ## Usage
 
@@ -143,6 +153,14 @@ The test script validates Bash syntax, launcher help output, expected repository
 crop-run oryza ~/forecast/test/oryza
 crop-run dssat ~/forecast/test/dssat B DSSBatch.v47
 crop-run aquacrop ~/forecast/test/aquacrop
+```
+
+With local example cases staged under `inst/examples`, you can also run:
+
+```bash
+crop-run dssat "$PWD/inst/examples/dssat" B DSSBatch.v48
+crop-run oryza "$PWD/inst/examples/oryza" control.dat
+crop-run aquacrop "$PWD/inst/examples/aquacrop"
 ```
 
 You can override the namespace or image version for a single command:

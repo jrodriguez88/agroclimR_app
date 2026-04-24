@@ -36,6 +36,18 @@ AquaCrop:
 crop-run aquacrop ~/forecast/test/aquacrop
 ```
 
+## Run local example cases
+
+If you keep local validation datasets under `inst/examples`, you can run them directly:
+
+```bash
+crop-run dssat "$PWD/inst/examples/dssat" B DSSBatch.v48
+crop-run oryza "$PWD/inst/examples/oryza" control.dat
+crop-run aquacrop "$PWD/inst/examples/aquacrop"
+```
+
+`scripts/test_all.sh` prefers `inst/examples/<model>` when those folders exist.
+
 ## Optional alias
 
 ```bash
